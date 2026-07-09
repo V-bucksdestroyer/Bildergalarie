@@ -2,101 +2,152 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bildergalerie</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f4f4f7;
-    margin: 0;
-    padding: 24px;
-    color: #222;
+    background: #0e0e12;
+    color: #f0f0f2;
+    padding: 20px 16px 60px 16px;
+    min-height: 100vh;
   }
+
   h1 {
     text-align: center;
-    margin-bottom: 20px;
+    font-size: 28px;
+    margin-bottom: 24px;
+    background: linear-gradient(90deg, #7f5af0, #2cb67d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
+
   .upload-box {
-    max-width: 600px;
+    max-width: 500px;
     margin: 0 auto 30px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #17171d;
+    border: 1px solid #2a2a33;
+    padding: 22px;
+    border-radius: 16px;
     text-align: center;
   }
-  .upload-box input[type=file] {
-    display: none;
-  }
+
+  input[type=file] { display: none; }
+
   .upload-label {
     display: inline-block;
-    padding: 10px 20px;
-    background: #4a6cf7;
+    padding: 12px 26px;
+    background: linear-gradient(90deg, #7f5af0, #6246ea);
     color: white;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 15px;
+    transition: opacity 0.15s;
   }
-  .upload-label:hover { background: #3a58d8; }
-  #status { margin-top: 10px; font-size: 14px; color: #666; }
+  .upload-label:hover { opacity: 0.85; }
+
+  #status {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #a0a0ab;
+    word-break: break-word;
+  }
+  #status.error { color: #ff6b6b; }
 
   .gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 18px;
-    max-width: 1200px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    max-width: 1300px;
     margin: 0 auto;
   }
+
+  @media (min-width: 700px) {
+    .gallery { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    h1 { font-size: 34px; }
+  }
+
   .card {
-    background: white;
-    border-radius: 12px;
+    background: #17171d;
+    border: 1px solid #2a2a33;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     display: flex;
     flex-direction: column;
-    transition: transform 0.15s;
+    transition: transform 0.15s, border-color 0.15s;
   }
-  .card:hover { transform: translateY(-3px); }
+  .card:hover { transform: translateY(-3px); border-color: #7f5af0; }
+
   .card img {
     width: 100%;
-    height: 180px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
-    background: #eee;
+    background: #222;
+    display: block;
   }
+
+  .card-body {
+    padding: 10px 12px;
+  }
+
+  .rank {
+    font-size: 11px;
+    color: #7f5af0;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
   .card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
   }
+
   .like-btn {
-    background: none;
-    border: 1px solid #ddd;
+    background: #1f1f27;
+    border: 1px solid #2a2a33;
     border-radius: 20px;
-    padding: 6px 14px;
+    padding: 6px 12px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
+    color: #f0f0f2;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: background 0.15s, border-color 0.15s;
   }
-  .like-btn:hover { background: #ffecec; border-color: #ff6b6b; }
-  .like-btn.liked { background: #ffe3e3; border-color: #ff6b6b; color: #d63333; }
+  .like-btn:hover { border-color: #ff6b6b; }
+  .like-btn.liked { background: #2a1418; border-color: #ff6b6b; color: #ff6b6b; }
+
   .like-count {
-    font-weight: 600;
-    font-size: 14px;
-    color: #555;
+    font-weight: 700;
+    font-size: 13px;
+    color: #a0a0ab;
   }
+
   .empty {
     text-align: center;
-    color: #888;
-    margin-top: 40px;
+    color: #6a6a75;
+    margin-top: 50px;
+    font-size: 15px;
   }
-  .rank {
-    font-size: 12px;
-    color: #999;
-    padding: 4px 14px 0 14px;
+
+  .setup-warning {
+    max-width: 600px;
+    margin: 0 auto 20px auto;
+    background: #2a1418;
+    border: 1px solid #ff6b6b;
+    color: #ff9b9b;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
   }
 </style>
 </head>
@@ -104,8 +155,10 @@
 
 <h1>📸 Bildergalerie</h1>
 
+<div id="setupWarning" class="setup-warning"></div>
+
 <div class="upload-box">
-  <label class="upload-label" for="fileInput">Bild hochladen</label>
+  <label class="upload-label" for="fileInput">＋ Bild hochladen</label>
   <input type="file" id="fileInput" accept="image/*" multiple>
   <div id="status"></div>
 </div>
@@ -113,36 +166,47 @@
 <div id="gallery" class="gallery"></div>
 <div id="emptyMsg" class="empty" style="display:none;">Noch keine Bilder hochgeladen. Sei die/der Erste!</div>
 
-<!-- Supabase JS-Bibliothek -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ==== Supabase Zugangsdaten ====
 const SUPABASE_URL = "https://ozojiuwppuehssicyfwq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96b2ppdXdwcHVlaHNzaWN5ZndxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDIzOTgsImV4cCI6MjA5OTE3ODM5OH0.nMFfkk6DhhWOXEYb-IzVXLr9ExcDu9n5lSy2V2A95yY";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const fileInput = document.getElementById('fileInput');
 const galleryEl = document.getElementById('gallery');
 const statusEl = document.getElementById('status');
 const emptyMsg = document.getElementById('emptyMsg');
+const setupWarning = document.getElementById('setupWarning');
 
-// Verhindert Mehrfach-Likes desselben Geräts (lokal im Browser gespeichert)
 let likedByMe = new Set(JSON.parse(localStorage.getItem('likedByMe') || '[]'));
 
 function saveLikedState() {
   localStorage.setItem('likedByMe', JSON.stringify([...likedByMe]));
 }
 
+function showError(msg) {
+  statusEl.textContent = msg;
+  statusEl.classList.add('error');
+}
+function clearStatus() {
+  statusEl.textContent = '';
+  statusEl.classList.remove('error');
+}
+
+function showSetupWarning(msg) {
+  setupWarning.textContent = msg;
+  setupWarning.style.display = 'block';
+}
+
 async function loadImages() {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('images')
     .select('*')
     .order('likes', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error(error);
-    statusEl.textContent = 'Fehler beim Laden der Bilder.';
+    showSetupWarning('Datenbank-Fehler: ' + error.message + ' — prüfe die Tabelle "images" und die RLS Policies in Supabase.');
     return;
   }
 
@@ -150,7 +214,7 @@ async function loadImages() {
 }
 
 function getPublicUrl(filePath) {
-  const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+  const { data } = sb.storage.from('images').getPublicUrl(filePath);
   return data.publicUrl;
 }
 
@@ -165,13 +229,15 @@ function renderGallery(images) {
     const url = getPublicUrl(img.file_path);
 
     card.innerHTML = `
-      <img src="${url}" alt="Bild">
-      <div class="rank">#${index + 1}</div>
-      <div class="card-footer">
-        <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${img.id}">
-          ${isLiked ? '❤️' : '🤍'} Like
-        </button>
-        <span class="like-count">${img.likes} Likes</span>
+      <img src="${url}" alt="Bild" loading="lazy">
+      <div class="card-body">
+        <div class="rank">#${index + 1}</div>
+        <div class="card-footer">
+          <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${img.id}">
+            ${isLiked ? '❤️' : '🤍'} Like
+          </button>
+          <span class="like-count">${img.likes} Likes</span>
+        </div>
       </div>
     `;
 
@@ -186,37 +252,31 @@ function renderGallery(images) {
 async function toggleLike(id) {
   const isLiked = likedByMe.has(id);
 
-  // Aktuellen Wert holen
-  const { data: current, error: fetchError } = await supabase
+  const { data: current, error: fetchError } = await sb
     .from('images')
     .select('likes')
     .eq('id', id)
     .single();
 
   if (fetchError) {
-    console.error(fetchError);
+    showError('Fehler beim Liken: ' + fetchError.message);
     return;
   }
 
   const newLikes = isLiked ? Math.max(0, current.likes - 1) : current.likes + 1;
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await sb
     .from('images')
     .update({ likes: newLikes })
     .eq('id', id);
 
   if (updateError) {
-    console.error(updateError);
+    showError('Fehler beim Liken: ' + updateError.message);
     return;
   }
 
-  if (isLiked) {
-    likedByMe.delete(id);
-  } else {
-    likedByMe.add(id);
-  }
+  if (isLiked) likedByMe.delete(id); else likedByMe.add(id);
   saveLikedState();
-
   await loadImages();
 }
 
@@ -224,40 +284,39 @@ fileInput.addEventListener('change', async (e) => {
   const files = Array.from(e.target.files);
   if (files.length === 0) return;
 
+  clearStatus();
   statusEl.textContent = 'Lade hoch...';
 
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue;
 
     if (file.size > 5 * 1024 * 1024) {
-      statusEl.textContent = `"${file.name}" ist zu groß (max. 5 MB).`;
+      showError(`"${file.name}" ist zu groß (max. 5 MB).`);
       continue;
     }
 
     const ext = file.name.split('.').pop();
     const filePath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await sb.storage
       .from('images')
       .upload(filePath, file);
 
     if (uploadError) {
-      console.error(uploadError);
-      statusEl.textContent = `Fehler beim Hochladen von "${file.name}".`;
+      showError(`Upload-Fehler: ${uploadError.message}`);
       continue;
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await sb
       .from('images')
       .insert({ file_path: filePath, likes: 0 });
 
     if (insertError) {
-      console.error(insertError);
-      statusEl.textContent = `Fehler beim Speichern von "${file.name}".`;
+      showError(`Datenbank-Fehler: ${insertError.message}`);
     }
   }
 
-  statusEl.textContent = '';
+  if (!statusEl.classList.contains('error')) clearStatus();
   fileInput.value = '';
   await loadImages();
 });
