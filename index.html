@@ -3,35 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bildergalerie</title>
+<title>Der Keller</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #0e0e12;
-    color: #f0f0f2;
-    padding: 20px 16px 60px 16px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(255,140,40,0.08), transparent 60%),
+      repeating-linear-gradient(0deg, #14100d, #14100d 2px, #17120e 2px, #17120e 40px),
+      #120e0b;
+    background-attachment: fixed;
+    color: #e9dfd2;
+    padding: 28px 16px 70px 16px;
     min-height: 100vh;
   }
 
   h1 {
     text-align: center;
-    font-size: 28px;
-    margin-bottom: 24px;
-    background: linear-gradient(90deg, #7f5af0, #2cb67d);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-family: 'Bebas Neue', 'Inter', sans-serif;
+    font-size: 42px;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+    color: #f3a04a;
+    text-shadow: 0 0 18px rgba(255,150,60,0.35), 0 2px 0 #000;
+  }
+
+  .tagline {
+    text-align: center;
+    color: #8a7c6a;
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 26px;
+    text-transform: uppercase;
   }
 
   .upload-box {
     max-width: 500px;
-    margin: 0 auto 30px auto;
-    background: #17171d;
-    border: 1px solid #2a2a33;
-    padding: 22px;
-    border-radius: 16px;
+    margin: 0 auto 34px auto;
+    background: linear-gradient(180deg, #201812, #1a130e);
+    border: 1px solid #3a2a1c;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.4);
+    padding: 24px;
+    border-radius: 10px;
     text-align: center;
   }
 
@@ -39,24 +55,26 @@
 
   .upload-label {
     display: inline-block;
-    padding: 12px 26px;
-    background: linear-gradient(90deg, #7f5af0, #6246ea);
-    color: white;
-    border-radius: 10px;
+    padding: 12px 28px;
+    background: linear-gradient(180deg, #e08a3c, #c96a1f);
+    color: #1a1108;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 15px;
-    transition: opacity 0.15s;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 0 #8a4d13, 0 6px 12px rgba(0,0,0,0.35);
+    transition: transform 0.1s, box-shadow 0.1s;
   }
-  .upload-label:hover { opacity: 0.85; }
+  .upload-label:hover { transform: translateY(1px); box-shadow: 0 3px 0 #8a4d13, 0 4px 10px rgba(0,0,0,0.35); }
 
   #status {
     margin-top: 12px;
     font-size: 13px;
-    color: #a0a0ab;
+    color: #8a7c6a;
     word-break: break-word;
   }
-  #status.error { color: #ff6b6b; }
+  #status.error { color: #ff7b5b; }
 
   .gallery {
     display: grid;
@@ -68,26 +86,29 @@
 
   @media (min-width: 700px) {
     .gallery { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-    h1 { font-size: 34px; }
+    h1 { font-size: 56px; }
   }
 
   .card {
-    background: #17171d;
-    border: 1px solid #2a2a33;
-    border-radius: 14px;
+    background: linear-gradient(180deg, #1c150f, #17110c);
+    border: 1px solid #33241a;
+    border-radius: 10px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.15s, border-color 0.15s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
-  .card:hover { transform: translateY(-3px); border-color: #7f5af0; }
+  .card:hover { transform: translateY(-3px); border-color: #e08a3c; box-shadow: 0 8px 22px rgba(0,0,0,0.55); }
 
   .card img {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    background: #222;
+    background: #221a13;
     display: block;
+    cursor: pointer;
+    filter: saturate(1.05) contrast(1.03);
   }
 
   .card-body {
@@ -96,7 +117,7 @@
 
   .rank {
     font-size: 11px;
-    color: #7f5af0;
+    color: #e08a3c;
     font-weight: 700;
     letter-spacing: 0.5px;
     margin-bottom: 6px;
@@ -108,35 +129,13 @@
     justify-content: space-between;
   }
 
-  .like-btn {
-    background: #1f1f27;
-    border: 1px solid #2a2a33;
-    border-radius: 20px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #f0f0f2;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .like-btn:hover { border-color: #ff6b6b; }
-  .like-btn.liked { background: #2a1418; border-color: #ff6b6b; color: #ff6b6b; }
-
-  .like-count {
-    font-weight: 700;
-    font-size: 13px;
-    color: #a0a0ab;
-  }
-
   /* ---- Vote-Buttons (Up/Down) ---- */
   .vote-group {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: #1f1f27;
-    border: 1px solid #2a2a33;
+    background: #1c150f;
+    border: 1px solid #33241a;
     border-radius: 20px;
     padding: 4px 6px;
   }
@@ -147,21 +146,21 @@
     font-size: 15px;
     padding: 4px 8px;
     border-radius: 14px;
-    color: #a0a0ab;
+    color: #8a7c6a;
     transition: background 0.15s, color 0.15s;
     line-height: 1;
   }
-  .vote-btn.up:hover { background: #142a1e; color: #2cb67d; }
-  .vote-btn.down:hover { background: #2a1418; color: #ff6b6b; }
-  .vote-btn.up.active { color: #2cb67d; background: #142a1e; }
-  .vote-btn.down.active { color: #ff6b6b; background: #2a1418; }
+  .vote-btn.up:hover { background: #1f2a17; color: #8fc95a; }
+  .vote-btn.down:hover { background: #2a1712; color: #ff7b5b; }
+  .vote-btn.up.active { color: #8fc95a; background: #1f2a17; }
+  .vote-btn.down.active { color: #ff7b5b; background: #2a1712; }
 
   .vote-score {
     font-weight: 700;
     font-size: 13px;
     min-width: 20px;
     text-align: center;
-    color: #f0f0f2;
+    color: #e9dfd2;
   }
 
   .comment-vote-group {
@@ -180,7 +179,7 @@
 
   .empty {
     text-align: center;
-    color: #6a6a75;
+    color: #6a5c4a;
     margin-top: 50px;
     font-size: 15px;
   }
@@ -188,24 +187,22 @@
   .setup-warning {
     max-width: 600px;
     margin: 0 auto 20px auto;
-    background: #2a1418;
-    border: 1px solid #ff6b6b;
-    color: #ff9b9b;
+    background: #2a1712;
+    border: 1px solid #ff7b5b;
+    color: #ffb199;
     padding: 14px 18px;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 13px;
     line-height: 1.5;
     display: none;
   }
-
-  .card img { cursor: pointer; }
 
   /* ---- Modal ---- */
   .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(8,5,3,0.9);
     z-index: 1000;
     align-items: center;
     justify-content: center;
@@ -215,15 +212,16 @@
 
   .modal-box {
     position: relative;
-    background: #17171d;
-    border: 1px solid #2a2a33;
-    border-radius: 16px;
+    background: linear-gradient(180deg, #1c150f, #17110c);
+    border: 1px solid #33241a;
+    border-radius: 12px;
     max-width: 900px;
     width: 100%;
     max-height: 92vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   }
   @media (min-width: 800px) {
     .modal-box { flex-direction: row; }
@@ -258,9 +256,9 @@
     position: absolute;
     top: 14px;
     right: 18px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.1);
     border: none;
-    color: white;
+    color: #e9dfd2;
     font-size: 20px;
     width: 36px;
     height: 36px;
@@ -268,7 +266,7 @@
     cursor: pointer;
     z-index: 1001;
   }
-  .modal-close:hover { background: rgba(255,255,255,0.28); }
+  .modal-close:hover { background: rgba(255,255,255,0.2); }
 
   .modal-top-row {
     display: flex;
@@ -284,15 +282,16 @@
     padding-right: 4px;
   }
   .comment {
-    background: #1f1f27;
-    border-radius: 10px;
+    background: #1c150f;
+    border: 1px solid #2a1e15;
+    border-radius: 8px;
     padding: 8px 12px;
     margin-bottom: 8px;
     font-size: 14px;
     line-height: 1.4;
     word-break: break-word;
   }
-  .comment-text { margin-bottom: 6px; }
+  .comment-text { margin-bottom: 6px; color: #e9dfd2; }
   .comment-footer {
     display: flex;
     align-items: center;
@@ -300,10 +299,10 @@
   }
   .comment-time {
     font-size: 11px;
-    color: #6a6a75;
+    color: #6a5c4a;
   }
   .no-comments {
-    color: #6a6a75;
+    color: #6a5c4a;
     font-size: 13px;
     text-align: center;
     margin-top: 20px;
@@ -320,47 +319,66 @@
   }
   .comment-form input {
     flex: 1;
-    background: #1f1f27;
-    border: 1px solid #2a2a33;
-    border-radius: 10px;
+    background: #1c150f;
+    border: 1px solid #33241a;
+    border-radius: 8px;
     padding: 10px 12px;
-    color: #f0f0f2;
+    color: #e9dfd2;
     font-size: 14px;
   }
-  .comment-form input:focus { outline: 1px solid #7f5af0; }
+  .comment-form input:focus { outline: 1px solid #e08a3c; }
   .comment-form button {
-    background: linear-gradient(90deg, #7f5af0, #6246ea);
+    background: linear-gradient(180deg, #e08a3c, #c96a1f);
     border: none;
-    color: white;
-    border-radius: 10px;
+    color: #1a1108;
+    border-radius: 8px;
     padding: 0 18px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
   }
-  .comment-form button:hover { opacity: 0.85; }
+  .comment-form button:hover { opacity: 0.9; }
   .char-counter {
     align-self: flex-end;
     font-size: 11px;
-    color: #6a6a75;
+    color: #6a5c4a;
   }
-  .char-counter.limit { color: #ff6b6b; }
+  .char-counter.limit { color: #ff7b5b; }
+
+  .donate-wrap {
+    text-align: center;
+    margin: 50px auto 0 auto;
+  }
+  .donate-btn {
+    background: linear-gradient(180deg, #e08a3c, #c96a1f);
+    color: #1a1108;
+    border: none;
+    padding: 14px 34px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #8a4d13, 0 6px 12px rgba(0,0,0,0.35);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .donate-btn:hover { transform: translateY(1px); box-shadow: 0 3px 0 #8a4d13, 0 4px 10px rgba(0,0,0,0.35); }
 </style>
 </head>
 <body>
 
-<h1>📸 Bildergalerie</h1>
+<h1>Der Keller</h1>
 
 <div id="setupWarning" class="setup-warning"></div>
 
 <div class="upload-box">
-  <label class="upload-label" for="fileInput">＋ Bild hochladen</label>
+  <label class="upload-label" for="fileInput">＋ Bild reinwerfen</label>
   <input type="file" id="fileInput" accept="image/*" multiple>
   <div id="status"></div>
 </div>
 
 <div id="gallery" class="gallery"></div>
-<div id="emptyMsg" class="empty" style="display:none;">Noch keine Bilder hochgeladen. Sei die/der Erste!</div>
+<div id="emptyMsg" class="empty" style="display:none;">Noch nichts im Keller. Wirf das erste Bild rein!</div>
 
 <div id="modalOverlay" class="modal-overlay">
   <div class="modal-box">
@@ -386,6 +404,10 @@
       </form>
     </div>
   </div>
+</div>
+
+<div class="donate-wrap">
+  <button class="donate-btn" id="donateBtn">💰 Spenden</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -761,6 +783,11 @@ fileInput.addEventListener('change', async (e) => {
 });
 
 loadImages();
+
+// ---- "Spenden"-Button: Rickroll ----
+document.getElementById('donateBtn').addEventListener('click', () => {
+  window.open('https://de.pornhub.org/', '_blank');
+});
 </script>
 
 </body>
