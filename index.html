@@ -130,6 +130,54 @@
     color: #a0a0ab;
   }
 
+  /* ---- Vote-Buttons (Up/Down) ---- */
+  .vote-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1f1f27;
+    border: 1px solid #2a2a33;
+    border-radius: 20px;
+    padding: 4px 6px;
+  }
+  .vote-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px 8px;
+    border-radius: 14px;
+    color: #a0a0ab;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+  }
+  .vote-btn.up:hover { background: #142a1e; color: #2cb67d; }
+  .vote-btn.down:hover { background: #2a1418; color: #ff6b6b; }
+  .vote-btn.up.active { color: #2cb67d; background: #142a1e; }
+  .vote-btn.down.active { color: #ff6b6b; background: #2a1418; }
+
+  .vote-score {
+    font-weight: 700;
+    font-size: 13px;
+    min-width: 20px;
+    text-align: center;
+    color: #f0f0f2;
+  }
+
+  .comment-vote-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .comment-vote-group .vote-btn {
+    font-size: 13px;
+    padding: 2px 6px;
+  }
+  .comment-vote-group .vote-score {
+    font-size: 12px;
+    min-width: 16px;
+  }
+
   .empty {
     text-align: center;
     color: #6a6a75;
@@ -244,11 +292,15 @@
     line-height: 1.4;
     word-break: break-word;
   }
+  .comment-text { margin-bottom: 6px; }
+  .comment-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
   .comment-time {
-    display: block;
     font-size: 11px;
     color: #6a6a75;
-    margin-top: 4px;
   }
   .no-comments {
     color: #6a6a75;
@@ -258,6 +310,11 @@
   }
 
   .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .comment-form-row {
     display: flex;
     gap: 8px;
   }
@@ -282,6 +339,12 @@
     font-size: 14px;
   }
   .comment-form button:hover { opacity: 0.85; }
+  .char-counter {
+    align-self: flex-end;
+    font-size: 11px;
+    color: #6a6a75;
+  }
+  .char-counter.limit { color: #ff6b6b; }
 </style>
 </head>
 <body>
@@ -307,13 +370,19 @@
     </div>
     <div class="modal-side">
       <div class="modal-top-row">
-        <button class="like-btn" id="modalLikeBtn">🤍 Like</button>
-        <span class="like-count" id="modalLikeCount">0 Likes</span>
+        <div class="vote-group" id="modalVoteGroup">
+          <button class="vote-btn up" id="modalUpBtn">▲</button>
+          <span class="vote-score" id="modalScore">0</span>
+          <button class="vote-btn down" id="modalDownBtn">▼</button>
+        </div>
       </div>
       <div class="comments-list" id="commentsList"></div>
       <form class="comment-form" id="commentForm">
-        <input type="text" id="commentInput" placeholder="Kommentar schreiben..." maxlength="300" required>
-        <button type="submit">Senden</button>
+        <div class="comment-form-row">
+          <input type="text" id="commentInput" placeholder="Kommentar schreiben..." maxlength="300" required>
+          <button type="submit">Senden</button>
+        </div>
+        <span class="char-counter" id="charCounter">0 / 300</span>
       </form>
     </div>
   </div>
@@ -334,19 +403,34 @@ const setupWarning = document.getElementById('setupWarning');
 const modalOverlay = document.getElementById('modalOverlay');
 const modalImg = document.getElementById('modalImg');
 const modalClose = document.getElementById('modalClose');
-const modalLikeBtn = document.getElementById('modalLikeBtn');
-const modalLikeCount = document.getElementById('modalLikeCount');
+const modalUpBtn = document.getElementById('modalUpBtn');
+const modalDownBtn = document.getElementById('modalDownBtn');
+const modalScore = document.getElementById('modalScore');
 const commentsList = document.getElementById('commentsList');
 const commentForm = document.getElementById('commentForm');
 const commentInput = document.getElementById('commentInput');
+const charCounter = document.getElementById('charCounter');
+
+const COMMENT_MAX_LEN = 300;
+commentInput.addEventListener('input', () => {
+  const len = commentInput.value.length;
+  charCounter.textContent = `${len} / ${COMMENT_MAX_LEN}`;
+  charCounter.classList.toggle('limit', len >= COMMENT_MAX_LEN);
+});
 
 let currentImages = [];
 let currentModalId = null;
 
-let likedByMe = new Set(JSON.parse(localStorage.getItem('likedByMe') || '[]'));
+// Speichert Stimmen lokal: { "img:UUID": "up"|"down", "comment:UUID": "up"|"down" }
+let myVotes = JSON.parse(localStorage.getItem('myVotes') || '{}');
 
-function saveLikedState() {
-  localStorage.setItem('likedByMe', JSON.stringify([...likedByMe]));
+function getVote(type, id) {
+  return myVotes[`${type}:${id}`] || null;
+}
+function setVote(type, id, dir) {
+  const key = `${type}:${id}`;
+  if (dir === null) delete myVotes[key]; else myVotes[key] = dir;
+  localStorage.setItem('myVotes', JSON.stringify(myVotes));
 }
 
 function showError(msg) {
@@ -366,16 +450,20 @@ function showSetupWarning(msg) {
 async function loadImages() {
   const { data, error } = await sb
     .from('images')
-    .select('*')
-    .order('likes', { ascending: false })
-    .order('created_at', { ascending: false });
+    .select('*');
 
   if (error) {
     showSetupWarning('Datenbank-Fehler: ' + error.message + ' — prüfe die Tabelle "images" und die RLS Policies in Supabase.');
     return;
   }
 
-  renderGallery(data || []);
+  const sorted = (data || []).sort((a, b) => {
+    const scoreDiff = (b.likes - b.dislikes) - (a.likes - a.dislikes);
+    if (scoreDiff !== 0) return scoreDiff;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  renderGallery(sorted);
 }
 
 function getPublicUrl(filePath) {
@@ -390,7 +478,8 @@ function renderGallery(images) {
   images.forEach((img, index) => {
     const card = document.createElement('div');
     card.className = 'card';
-    const isLiked = likedByMe.has(img.id);
+    const myVote = getVote('img', img.id); // 'up' | 'down' | null
+    const score = img.likes - img.dislikes;
     const url = getPublicUrl(img.file_path);
 
     card.innerHTML = `
@@ -398,10 +487,11 @@ function renderGallery(images) {
       <div class="card-body">
         <div class="rank">#${index + 1}</div>
         <div class="card-footer">
-          <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${img.id}">
-            ${isLiked ? '❤️' : '🤍'} Like
-          </button>
-          <span class="like-count">${img.likes} Likes</span>
+          <div class="vote-group">
+            <button class="vote-btn up ${myVote === 'up' ? 'active' : ''}" data-id="${img.id}" data-dir="up">▲</button>
+            <span class="vote-score">${score}</span>
+            <button class="vote-btn down ${myVote === 'down' ? 'active' : ''}" data-id="${img.id}" data-dir="down">▼</button>
+          </div>
         </div>
       </div>
     `;
@@ -409,8 +499,11 @@ function renderGallery(images) {
     galleryEl.appendChild(card);
   });
 
-  document.querySelectorAll('.like-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
+  document.querySelectorAll('.card .vote-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      voteImage(btn.dataset.id, btn.dataset.dir);
+    });
   });
 
   document.querySelectorAll('.card img').forEach(imgEl => {
@@ -420,51 +513,70 @@ function renderGallery(images) {
   currentImages = images;
 }
 
-async function toggleLike(id) {
-  const isLiked = likedByMe.has(id);
+// Generische Vote-Funktion für Bilder und Kommentare
+async function castVote(table, id, dir) {
+  const prevVote = getVote(table === 'images' ? 'img' : 'comment', id);
+  const type = table === 'images' ? 'img' : 'comment';
 
   const { data: current, error: fetchError } = await sb
-    .from('images')
-    .select('likes')
+    .from(table)
+    .select('likes, dislikes')
     .eq('id', id)
     .single();
 
   if (fetchError) {
-    showError('Fehler beim Liken: ' + fetchError.message);
+    showError('Fehler: ' + fetchError.message);
     return;
   }
 
-  const newLikes = isLiked ? Math.max(0, current.likes - 1) : current.likes + 1;
+  let { likes, dislikes } = current;
+  let newVote = dir;
+
+  // Vorherige Stimme entfernen
+  if (prevVote === 'up') likes = Math.max(0, likes - 1);
+  if (prevVote === 'down') dislikes = Math.max(0, dislikes - 1);
+
+  // Wenn gleicher Button nochmal geklickt wird -> Stimme zurücknehmen
+  if (prevVote === dir) {
+    newVote = null;
+  } else {
+    if (dir === 'up') likes += 1;
+    if (dir === 'down') dislikes += 1;
+  }
 
   const { error: updateError } = await sb
-    .from('images')
-    .update({ likes: newLikes })
+    .from(table)
+    .update({ likes, dislikes })
     .eq('id', id);
 
   if (updateError) {
-    showError('Fehler beim Liken: ' + updateError.message);
+    showError('Fehler: ' + updateError.message);
     return;
   }
 
-  if (isLiked) likedByMe.delete(id); else likedByMe.add(id);
-  saveLikedState();
-  await loadImages();
+  setVote(type, id, newVote);
 }
 
-// ---- Modal: öffnen, schließen, Kommentare, Like ----
-function updateModalLikeUI() {
+async function voteImage(id, dir) {
+  await castVote('images', id, dir);
+  await loadImages();
+  if (currentModalId === id) updateModalVoteUI();
+}
+
+// ---- Modal: öffnen, schließen, Kommentare, Voting ----
+function updateModalVoteUI() {
   const img = currentImages.find(i => i.id === currentModalId);
   if (!img) return;
-  const isLiked = likedByMe.has(img.id);
-  modalLikeBtn.classList.toggle('liked', isLiked);
-  modalLikeBtn.textContent = (isLiked ? '❤️' : '🤍') + ' Like';
-  modalLikeCount.textContent = img.likes + ' Likes';
+  const myVote = getVote('img', img.id);
+  modalUpBtn.classList.toggle('active', myVote === 'up');
+  modalDownBtn.classList.toggle('active', myVote === 'down');
+  modalScore.textContent = img.likes - img.dislikes;
 }
 
 async function openModal(id, imgUrl) {
   currentModalId = id;
   modalImg.src = imgUrl;
-  updateModalLikeUI();
+  updateModalVoteUI();
   modalOverlay.classList.add('open');
   await loadComments(id);
 }
@@ -479,11 +591,8 @@ modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', (e) => {
   if (e.target === modalOverlay) closeModal();
 });
-modalLikeBtn.addEventListener('click', async () => {
-  if (!currentModalId) return;
-  await toggleLike(currentModalId);
-  updateModalLikeUI();
-});
+modalUpBtn.addEventListener('click', () => { if (currentModalId) voteImage(currentModalId, 'up'); });
+modalDownBtn.addEventListener('click', () => { if (currentModalId) voteImage(currentModalId, 'down'); });
 
 async function loadComments(imageId) {
   commentsList.innerHTML = '<div class="no-comments">Lade Kommentare...</div>';
@@ -504,12 +613,30 @@ async function loadComments(imageId) {
     return;
   }
 
-  commentsList.innerHTML = data.map(c => `
-    <div class="comment">
-      ${escapeHtml(c.text)}
-      <span class="comment-time">${new Date(c.created_at).toLocaleString('de-DE')}</span>
-    </div>
-  `).join('');
+  commentsList.innerHTML = data.map(c => {
+    const myVote = getVote('comment', c.id);
+    const score = c.likes - c.dislikes;
+    return `
+      <div class="comment">
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-footer">
+          <span class="comment-time">${new Date(c.created_at).toLocaleString('de-DE')}</span>
+          <div class="comment-vote-group">
+            <button class="vote-btn up ${myVote === 'up' ? 'active' : ''}" data-id="${c.id}" data-dir="up">▲</button>
+            <span class="vote-score">${score}</span>
+            <button class="vote-btn down ${myVote === 'down' ? 'active' : ''}" data-id="${c.id}" data-dir="down">▼</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.comment-vote-group .vote-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await castVote('comments', btn.dataset.id, btn.dataset.dir);
+      await loadComments(imageId);
+    });
+  });
 
   commentsList.scrollTop = commentsList.scrollHeight;
 }
@@ -523,12 +650,13 @@ function escapeHtml(str) {
 commentForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentModalId) return;
-  const text = commentInput.value.trim();
+
+  const text = commentInput.value.trim().slice(0, COMMENT_MAX_LEN);
   if (!text) return;
 
   const { error } = await sb
     .from('comments')
-    .insert({ image_id: currentModalId, text });
+    .insert({ image_id: currentModalId, text, likes: 0, dislikes: 0 });
 
   if (error) {
     alert('Fehler beim Senden: ' + error.message);
@@ -536,6 +664,8 @@ commentForm.addEventListener('submit', async (e) => {
   }
 
   commentInput.value = '';
+  charCounter.textContent = `0 / ${COMMENT_MAX_LEN}`;
+  charCounter.classList.remove('limit');
   await loadComments(currentModalId);
 });
 
@@ -618,7 +748,7 @@ fileInput.addEventListener('change', async (e) => {
 
     const { error: insertError } = await sb
       .from('images')
-      .insert({ file_path: filePath, likes: 0 });
+      .insert({ file_path: filePath, likes: 0, dislikes: 0 });
 
     if (insertError) {
       showError(`Datenbank-Fehler: ${insertError.message}`);
