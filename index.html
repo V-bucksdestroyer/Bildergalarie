@@ -149,6 +149,139 @@
     line-height: 1.5;
     display: none;
   }
+
+  .card img { cursor: pointer; }
+
+  /* ---- Modal ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    position: relative;
+    background: #17171d;
+    border: 1px solid #2a2a33;
+    border-radius: 16px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (min-width: 800px) {
+    .modal-box { flex-direction: row; }
+  }
+
+  .modal-img-wrap {
+    flex: 1 1 55%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 45vh;
+  }
+  @media (min-width: 800px) {
+    .modal-img-wrap { max-height: 92vh; }
+  }
+  .modal-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .modal-side {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1001;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.28); }
+
+  .modal-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .comments-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding-right: 4px;
+  }
+  .comment {
+    background: #1f1f27;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .comment-time {
+    display: block;
+    font-size: 11px;
+    color: #6a6a75;
+    margin-top: 4px;
+  }
+  .no-comments {
+    color: #6a6a75;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .comment-form {
+    display: flex;
+    gap: 8px;
+  }
+  .comment-form input {
+    flex: 1;
+    background: #1f1f27;
+    border: 1px solid #2a2a33;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #f0f0f2;
+    font-size: 14px;
+  }
+  .comment-form input:focus { outline: 1px solid #7f5af0; }
+  .comment-form button {
+    background: linear-gradient(90deg, #7f5af0, #6246ea);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    padding: 0 18px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .comment-form button:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -166,6 +299,26 @@
 <div id="gallery" class="gallery"></div>
 <div id="emptyMsg" class="empty" style="display:none;">Noch keine Bilder hochgeladen. Sei die/der Erste!</div>
 
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-img-wrap">
+      <img id="modalImg" src="" alt="Bild groß">
+    </div>
+    <div class="modal-side">
+      <div class="modal-top-row">
+        <button class="like-btn" id="modalLikeBtn">🤍 Like</button>
+        <span class="like-count" id="modalLikeCount">0 Likes</span>
+      </div>
+      <div class="comments-list" id="commentsList"></div>
+      <form class="comment-form" id="commentForm">
+        <input type="text" id="commentInput" placeholder="Kommentar schreiben..." maxlength="300" required>
+        <button type="submit">Senden</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://ozojiuwppuehssicyfwq.supabase.co";
@@ -177,6 +330,18 @@ const galleryEl = document.getElementById('gallery');
 const statusEl = document.getElementById('status');
 const emptyMsg = document.getElementById('emptyMsg');
 const setupWarning = document.getElementById('setupWarning');
+
+const modalOverlay = document.getElementById('modalOverlay');
+const modalImg = document.getElementById('modalImg');
+const modalClose = document.getElementById('modalClose');
+const modalLikeBtn = document.getElementById('modalLikeBtn');
+const modalLikeCount = document.getElementById('modalLikeCount');
+const commentsList = document.getElementById('commentsList');
+const commentForm = document.getElementById('commentForm');
+const commentInput = document.getElementById('commentInput');
+
+let currentImages = [];
+let currentModalId = null;
 
 let likedByMe = new Set(JSON.parse(localStorage.getItem('likedByMe') || '[]'));
 
@@ -229,7 +394,7 @@ function renderGallery(images) {
     const url = getPublicUrl(img.file_path);
 
     card.innerHTML = `
-      <img src="${url}" alt="Bild" loading="lazy">
+      <img src="${url}" alt="Bild" loading="lazy" data-id="${img.id}">
       <div class="card-body">
         <div class="rank">#${index + 1}</div>
         <div class="card-footer">
@@ -245,8 +410,14 @@ function renderGallery(images) {
   });
 
   document.querySelectorAll('.like-btn').forEach(btn => {
-    btn.addEventListener('click', () => toggleLike(btn.dataset.id));
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
   });
+
+  document.querySelectorAll('.card img').forEach(imgEl => {
+    imgEl.addEventListener('click', () => openModal(imgEl.dataset.id, imgEl.src));
+  });
+
+  currentImages = images;
 }
 
 async function toggleLike(id) {
@@ -280,6 +451,137 @@ async function toggleLike(id) {
   await loadImages();
 }
 
+// ---- Modal: öffnen, schließen, Kommentare, Like ----
+function updateModalLikeUI() {
+  const img = currentImages.find(i => i.id === currentModalId);
+  if (!img) return;
+  const isLiked = likedByMe.has(img.id);
+  modalLikeBtn.classList.toggle('liked', isLiked);
+  modalLikeBtn.textContent = (isLiked ? '❤️' : '🤍') + ' Like';
+  modalLikeCount.textContent = img.likes + ' Likes';
+}
+
+async function openModal(id, imgUrl) {
+  currentModalId = id;
+  modalImg.src = imgUrl;
+  updateModalLikeUI();
+  modalOverlay.classList.add('open');
+  await loadComments(id);
+}
+
+function closeModal() {
+  modalOverlay.classList.remove('open');
+  currentModalId = null;
+  modalImg.src = '';
+}
+
+modalClose.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => {
+  if (e.target === modalOverlay) closeModal();
+});
+modalLikeBtn.addEventListener('click', async () => {
+  if (!currentModalId) return;
+  await toggleLike(currentModalId);
+  updateModalLikeUI();
+});
+
+async function loadComments(imageId) {
+  commentsList.innerHTML = '<div class="no-comments">Lade Kommentare...</div>';
+
+  const { data, error } = await sb
+    .from('comments')
+    .select('*')
+    .eq('image_id', imageId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    commentsList.innerHTML = `<div class="no-comments">Fehler beim Laden der Kommentare: ${error.message}</div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    commentsList.innerHTML = '<div class="no-comments">Noch keine Kommentare. Schreib den ersten!</div>';
+    return;
+  }
+
+  commentsList.innerHTML = data.map(c => `
+    <div class="comment">
+      ${escapeHtml(c.text)}
+      <span class="comment-time">${new Date(c.created_at).toLocaleString('de-DE')}</span>
+    </div>
+  `).join('');
+
+  commentsList.scrollTop = commentsList.scrollHeight;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+commentForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentModalId) return;
+  const text = commentInput.value.trim();
+  if (!text) return;
+
+  const { error } = await sb
+    .from('comments')
+    .insert({ image_id: currentModalId, text });
+
+  if (error) {
+    alert('Fehler beim Senden: ' + error.message);
+    return;
+  }
+
+  commentInput.value = '';
+  await loadComments(currentModalId);
+});
+
+// ---- Bildkomprimierung vor dem Hochladen (spart Speicherplatz) ----
+function compressImage(file, maxDimension = 1600, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => { img.src = e.target.result; };
+    reader.onerror = reject;
+
+    img.onload = () => {
+      let { width, height } = img;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round(height * (maxDimension / width));
+          width = maxDimension;
+        } else {
+          width = Math.round(width * (maxDimension / height));
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { reject(new Error('Komprimierung fehlgeschlagen')); return; }
+          resolve(blob);
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+}
+
 fileInput.addEventListener('change', async (e) => {
   const files = Array.from(e.target.files);
   if (files.length === 0) return;
@@ -290,17 +592,24 @@ fileInput.addEventListener('change', async (e) => {
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue;
 
-    if (file.size > 5 * 1024 * 1024) {
-      showError(`"${file.name}" ist zu groß (max. 5 MB).`);
+    let uploadBlob;
+    try {
+      uploadBlob = await compressImage(file);
+    } catch (err) {
+      showError(`Konnte "${file.name}" nicht verarbeiten, lade Original hoch.`);
+      uploadBlob = file;
+    }
+
+    if (uploadBlob.size > 5 * 1024 * 1024) {
+      showError(`"${file.name}" ist auch nach Komprimierung zu groß (max. 5 MB).`);
       continue;
     }
 
-    const ext = file.name.split('.').pop();
-    const filePath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const filePath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
 
     const { error: uploadError } = await sb.storage
       .from('images')
-      .upload(filePath, file);
+      .upload(filePath, uploadBlob, { contentType: 'image/jpeg' });
 
     if (uploadError) {
       showError(`Upload-Fehler: ${uploadError.message}`);
